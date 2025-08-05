@@ -1,29 +1,28 @@
 from dotenv import load_dotenv
 import os
 import requests
-from datetime import datetime, timedelta, timezone
-import streamlit as st
+from datetime import datetime,timedelta, timezone
 import plotly.graph_objects as go
 import pandas as pd
-
+import streamlit as st
 
 load_dotenv()
 weather_api = os.getenv('openweather_api')
 
-#current weather
-def get_weather(city: str) -> dict:
-    '''Takes a city name and returns associated current weather details.'''
+#current weather tool
+def get_weather(city):    #openweather
+    '''tool takes city name and returns associated current weather details'''
+    
     url = "http://api.openweathermap.org/data/2.5/weather"
-    params = {
+    params= {
         'appid': weather_api,
         'q': city,
-        'units': 'metric'
+        'units' : 'metric' 
     }
     try:
         response = requests.get(url, params=params)
-        response.raise_for_status()
         if response.status_code == 200:
-            weather_data = response.json()
+            weather_data=response.json()
             report = (
                 f"📍 CITY: {weather_data['name']}\n"
                 f"🌡️ TEMPERATURE: {weather_data['main']['temp']}°C\n"
@@ -41,74 +40,60 @@ def get_weather(city: str) -> dict:
                 f"Visibility is around {int(weather_data['visibility'] / 1000)} km, and winds are blowing at "
                 f"{weather_data['wind']['speed']} km/h."
             )
-            return {
-                "report": report,
-                "readable": readable
-            }
-        else:
-            st.error("error fetching current weather")
-            return {"report": "error getting current weather"}
-            
+            return{ 
+                "report":report,
+                "readable": readable}
     except requests.exceptions.RequestException as e:
-        print(f"Weather API error: {str(e)}")
-        st.error("error fetching current weather")
+        print(str(e))
         return {"report": "error getting current weather"}
-    
+        
 
-#forecast
+#forecast weather tool
 def get_forecast(city: str) -> dict:
     """
     Fetch 5-day forecast (3-hour intervals) for the specified city.
     Returns JSON dict or raises an exception.
     """
-    url = 'http://api.openweathermap.org/data/2.5/forecast'
-    params = {
+    URL = 'http://api.openweathermap.org/data/2.5/forecast'
+    params= {
         'appid': weather_api,
         'q': city,
-        'units': 'metric'
+        'units' : 'metric' 
     }
-    try:
-        response = requests.get(url, params=params)
-        response.raise_for_status()
-        data = response.json()
+    response = requests.get(URL, params=params)
+    response.raise_for_status()
+    data = response.json()
 
-        forecast_list = data.get("list", [])
-        parsed_forecast = []
-        readable_lines = []
+    forecast_list = data.get("list", [])
+    parsed_forecast = []
+    readable_lines = []
 
-        for entry in forecast_list:
-            dt = datetime.fromtimestamp(entry['dt']).strftime("%a %d %b %I:%M %p")
-            temp = entry['main']['temp']
-            desc = entry['weather'][0]['description'].capitalize()
-            wind = entry['wind']['speed']
-            humidity = entry['main']['humidity']
+    for entry in forecast_list:
+        dt = datetime.fromtimestamp(entry['dt']).strftime("%a %d %b %I:%M %p")
+        temp = entry['main']['temp']
+        desc = entry['weather'][0]['description'].capitalize()
+        wind = entry['wind']['speed']
+        humidity = entry['main']['humidity']
 
-            item = {
-                "datetime": dt,
-                "temp": temp,
-                "description": desc,
-                "wind": wind,
-                "humidity": humidity
-            }
-
-            parsed_forecast.append(item)
-            readable_lines.append(
-                f"{dt}: {desc}, {temp}°C, Wind {wind} m/s, Humidity {humidity}%"
-            )
-
-        return {
-            "raw": data,
-            "parsed": parsed_forecast,
-            "string": "\n".join(readable_lines)
+        item = {
+            "datetime": dt,
+            "temp": temp,
+            "description": desc,
+            "wind": wind,
+            "humidity": humidity
         }
-    except requests.exceptions.RequestException as e:
-        print(f"Forecast API error: {str(e)}")
-        st.error("error fetching forecast weather")
-        return {}
 
+        parsed_forecast.append(item)
+        readable_lines.append(
+            f"{dt}: {desc}, {temp}°C, Wind {wind} m/s, Humidity {humidity}%"
+        )
 
+    return {
+        "raw": data,
+        "parsed": parsed_forecast,
+        "string": "\n".join(readable_lines)
+    }
 
-#graph
 def plot_forecast_graph(parsed_list, limit=40, key="forecast_plot"):
  
 
@@ -156,7 +141,8 @@ def plot_forecast_graph(parsed_list, limit=40, key="forecast_plot"):
 
 
 
-#current date time
+#current time and date tool
+
 def get_time_and_date(city: str) -> str:
     """
     Returns the current local time and date for a given city 
@@ -183,6 +169,6 @@ def get_time_and_date(city: str) -> str:
         return f"The current date and time in {city} is {formatted_time}."
     
     except Exception as e:
-        
         return f"An error occurred while fetching time and date for {city}: {str(e)}"
-        
+
+print(get_time_and_date("kolkata"))  # Example usage
